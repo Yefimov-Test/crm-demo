@@ -54,7 +54,10 @@ async function sendTelegramNotification(lead: {
   try {
     const token = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_CHAT_ID;
-    if (!token || !chatId) return;
+    if (!token || !chatId) {
+      console.error("Telegram env vars missing:", { token: !!token, chatId: !!chatId });
+      return;
+    }
 
     const priorityEmoji =
       lead.priority === "hot"
@@ -84,8 +87,8 @@ async function sendTelegramNotification(lead: {
         }),
       }
     );
-  } catch {
-    console.error("Telegram notification failed");
+  } catch (err) {
+    console.error("Telegram notification failed:", err);
   }
 }
 
@@ -128,8 +131,8 @@ export async function POST(request: Request) {
     );
   }
 
-  // Telegram in background — don't block response
-  sendTelegramNotification({ name, email, topic, priority, message });
+  // Telegram — await to ensure it completes before function exits
+  await sendTelegramNotification({ name, email, topic, priority, message });
 
   return NextResponse.json({ success: true, lead });
 }
