@@ -14,15 +14,17 @@ export async function POST(request: Request) {
     );
   }
 
-  // Send success to client immediately, process in n8n async
-  // Fire webhook to n8n (don't await — client gets instant response)
-  fetch(N8N_WEBHOOK_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, email, phone: phone || null, topic, message }),
-  }).catch((err) => {
+  // Send webhook to n8n, then respond to client
+  try {
+    const webhookRes = await fetch(N8N_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, phone: phone || null, topic, message }),
+    });
+    console.log("n8n webhook response:", webhookRes.status);
+  } catch (err) {
     console.error("n8n webhook failed:", err);
-  });
+  }
 
   return NextResponse.json({ success: true });
 }
